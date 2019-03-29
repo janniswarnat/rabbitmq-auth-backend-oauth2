@@ -3,7 +3,7 @@
 gem list cf-uaac | grep cf-uaac || exit 1
 gem list bunny | grep bunny || exit 1
 
-target=${UAA_HOST:="http://localhost:8080/uaa"}
+target=${UAA_HOST:="http://vdi-debian09.fit.fraunhofer.de:8080/uaa"}
 # export to use a different ctl, e.g. if the node was built from source
 ctl=${RABBITMQCTL:="rabbitmqctl"}
 
@@ -15,6 +15,11 @@ uaac token client get admin -s adminsecret
 
 # Set permission to list signing keys
 uaac client update admin --authorities "clients.read clients.secret clients.write uaa.admin clients.admin scim.write scim.read uaa.resource"
+
+echo "Auth info for admin user"
+echo
+uaac context admin
+echo
 
 # Rabbit UAA user
 # The user name and password needed to retrieve access tokens,
@@ -72,5 +77,12 @@ echo
 uaac context rabbit_super
 echo
 
+echo "signing key"
+uaac signing key -c admin -s adminsecret
+echo
+
 # Create queues
-ruby demo/declare_queues.rb uaa_vhost/some_queue uaa_vhost/other_queue other_vhost/some_queue other_vhost/other_queue
+echo "create queues with guest / guest"
+ruby declare_queues.rb uaa_vhost/some_queue uaa_vhost/other_queue other_vhost/some_queue other_vhost/other_queue
+echo "create queues with rabbit_super access token"
+ruby declare_queues_access_token.rb uaa_vhost/some_queue uaa_vhost/other_queue other_vhost/some_queue other_vhost/other_queue
